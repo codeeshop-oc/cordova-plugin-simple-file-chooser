@@ -120,17 +120,10 @@ public class Chooser extends CordovaPlugin {
                 }
             } else if (requestCode == Chooser.PICK_FOLDER_REQUEST && this.callback != null) {
                 if (resultCode == Activity.RESULT_OK) {
-                    JSONArray files = new JSONArray();
-                    if (data.getClipData() != null) {
-                        for (int i = 0; i < data.getClipData().getItemCount(); i++) {
-                            files.put(processFileUri(data.getClipData().getItemAt(i).getUri()));
-                        }
-                        this.callback.success(files.toString());
-                    } else if (data.getData() != null) {
-                        files.put(processFileUri(data.getData()));
-                        this.callback.success(files.toString());
+                    if (data.getData() != null) {
+                        this.callback.success(extractActualFolderUri(data.getData()).toString());
                     } else {
-                        this.callback.error("File URI was null.");
+                        this.callback.error("Folder URI was null.");
                     }
                 } else if (resultCode == Activity.RESULT_CANCELED) {
                     this.callback.error("RESULT_CANCELED");
@@ -162,16 +155,20 @@ public class Chooser extends CordovaPlugin {
     }
 
     public JSONObject extractActualFolderUri(Uri uri) {
-        ContentResolver contentResolver = this.cordova.getActivity().getContentResolver();
-        String name = Chooser.getDisplayName(contentResolver, uri);
+        String contentUriText = uri.toString();
+        Uri contentUri = Uri.parse(contentUriText);
+
+        String path = contentUri.getPath();
+        String[] pathSegments = path.split("/");
+        String name = pathSegments[pathSegments.length - 1];
+
         JSONObject dir = new JSONObject();
         try {
             dir.put("name", name);
-            dir.put("uri", uri.toString());
+            dir.put("uri", contentUriText);
         } catch (JSONException err) {
             this.callback.error("Processing failed: " + err.toString());
         }
         return dir;
     }
-
 }
