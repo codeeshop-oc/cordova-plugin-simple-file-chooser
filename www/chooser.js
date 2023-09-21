@@ -29,7 +29,7 @@ module.exports = {
 
         return result;
     },
-    getFolder: function (accept, successCallback, failureCallback) {
+    saveFile: function (fileName, fileContent, successCallback, failureCallback) {
         var result = new Promise(function (resolve, reject) {
             cordova.exec(
                 function (json) {
@@ -43,9 +43,8 @@ module.exports = {
                 'Chooser',
                 'getFolder',
                 [
-                    (typeof accept === 'string'
-                        ? accept.replace(/\s/g, '')
-                        : undefined) || '*/*',
+                    fileName,
+                    fileContent
                 ]
             );
         });
