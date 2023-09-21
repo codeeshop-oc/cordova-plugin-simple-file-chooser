@@ -1,27 +1,20 @@
 package in.foobars.cordova;
 
-import android.provider.DocumentsContract;
-import android.app.Activity;
+import java.io.OutputStream; 
+import org.apache.cordova.CordovaPlugin;
+import android.content.Context;
 import android.content.ContentResolver;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Base64;
-
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.IOException;
-import java.lang.Exception;
-import java.util.ArrayList;
-import java.util.List;
-
+import org.json.JSONObject;
 import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
+import android.app.Activity;
+import android.content.Intent;
 
 public class Chooser extends CordovaPlugin {
     private static final String ACTION_OPEN = "getFiles";
@@ -29,6 +22,7 @@ public class Chooser extends CordovaPlugin {
     private static final int PICK_FILE_REQUEST = 1;
     private static final int PICK_FOLDER_REQUEST = 2;
     private static final String TAG = "Chooser";
+    private static String FILE_CONTENT_MAIN = "";
 
     public static String getDisplayName(ContentResolver contentResolver, Uri uri) {
         String[] projection = {MediaStore.MediaColumns.DISPLAY_NAME};
@@ -66,19 +60,20 @@ public class Chooser extends CordovaPlugin {
         callbackContext.sendPluginResult(pluginResult);
     }
 
-    public void chooseFolder(CallbackContext callbackContext) {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-
-        Intent chooser = Intent.createChooser(intent, "Select Folder");
-        cordova.startActivityForResult(this, chooser, Chooser.PICK_FOLDER_REQUEST);
+    public void chooseFolder(CallbackContext callbackContext, String fileName, String fileContent) {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.setType("application/octet-stream");
+        // Specify the initial file name (optional)
+        intent.putExtra(Intent.EXTRA_TITLE, fileName);;
+        Chooser.FILE_CONTENT_MAIN = fileContent;
+        cordova.startActivityForResult(this, intent, Chooser.PICK_FOLDER_REQUEST);
 
         PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
         pluginResult.setKeepCallback(true);
         this.callback = callbackContext;
-        callbackContext.sendPluginResult(pluginResult);
+        callbackContext.sendPluginResult(pluginResult);        
     }
-
+ 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
         try {
@@ -86,7 +81,7 @@ public class Chooser extends CordovaPlugin {
                 this.chooseFile(callbackContext, args.getString(0));
                 return true;
             } else if (action.equals(Chooser.ACTION_OPEN_FOLDER)) {
-                this.chooseFolder(callbackContext);
+                this.chooseFolder(callbackContext, args.getString(0), args.getString(1));
                 return true;
             }
         } catch (JSONException err) {
@@ -121,7 +116,18 @@ public class Chooser extends CordovaPlugin {
             } else if (requestCode == Chooser.PICK_FOLDER_REQUEST && this.callback != null) {
                 if (resultCode == Activity.RESULT_OK) {
                     if (data.getData() != null) {
-                        this.callback.success(extractActualFolderUri(data.getData()).toString());
+                        Uri uri = data.getData();
+
+                        OutputStream outputStream = cordova.getActivity().getContentResolver().openOutputStream(uri);
+                        if (outputStream != null) {
+                            // Write your content to the outputStream
+                            String content = Chooser.FILE_CONTENT_MAIN;
+                            outputStream.write(content.getBytes());
+                            outputStream.close();
+
+                            // Content has been written to the file
+                        }
+                        this.callback.error("Folder URI was null.");
                     } else {
                         this.callback.error("Folder URI was null.");
                     }
@@ -152,23 +158,5 @@ public class Chooser extends CordovaPlugin {
             this.callback.error("Processing failed: " + err.toString());
         }
         return file;
-    }
-
-    public JSONObject extractActualFolderUri(Uri uri) {
-        String contentUriText = uri.toString();
-        Uri contentUri = Uri.parse(contentUriText);
-
-        String path = contentUri.getPath();
-        String[] pathSegments = path.split("/");
-        String name = pathSegments[pathSegments.length - 1];
-
-        JSONObject dir = new JSONObject();
-        try {
-            dir.put("name", name);
-            dir.put("uri", contentUriText);
-        } catch (JSONException err) {
-            this.callback.error("Processing failed: " + err.toString());
-        }
-        return dir;
-    }
+    } 
 }
