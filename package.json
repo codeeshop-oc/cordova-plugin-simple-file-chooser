@@ -1,7 +1,7 @@
 {
   "name": "@codeeshop/cordova-plugin-simple-file-chooser",
   "private": false,
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "Cordova file chooser plugin",
   "main": "index.js",
   "repository": {
