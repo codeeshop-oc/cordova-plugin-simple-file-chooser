@@ -1,8 +1,7 @@
 name: Release After Tags
 
 on:
-  push:
-    branches: [ test, main ]
+  push:    
     tags: 
      - '*'
 
