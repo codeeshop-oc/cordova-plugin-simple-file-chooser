@@ -1,0 +1,33 @@
+name: Release Tags
+
+on:
+  push:
+    branches: [ test, main ]
+  workflow_dispatch:
+
+jobs:
+  tags:
+    name: Release Tags
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v3
+
+        - name: Create tags
+          uses: actions/github-script@v5
+          with:
+            script: |
+              const VERSION = require('./package.json').version
+              const majorVersion = VERSION.split('.')[0];
+              const minorVersion = VERSION.split('.')[1];
+              const patchVersion = VERSION.split('.')[2];
+              const tags = [
+                `v${majorVersion}.${minorVersion}.${patchVersion}`
+              ];
+              tags.forEach((tag) => {
+                github.rest.git.createRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `refs/tags/${tag}`,
+                  sha: context.sha
+                })
+              })
