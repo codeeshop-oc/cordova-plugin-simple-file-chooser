@@ -1,0 +1,26 @@
+name: Release After Tags
+
+on:
+  push:
+    branches: [ test, main ]
+    tags: 
+     - '*'
+
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release 
+        if: startsWith(github.ref, 'refs/tags/') 
+        uses: actions/create-release@v1 
+        id: create_release 
+        with: 
+          draft: false 
+          prerelease: false 
+          release_name: ${{ github.ref }} 
+          tag_name: ${{ github.ref }} 
+          body_path: CHANGELOG.md 
+          env: |
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
