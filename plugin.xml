@@ -2,8 +2,8 @@
 <plugin 
 	xmlns="http://www.phonegap.com/ns/plugins/1.0" 
 	xmlns:android="http://schemas.android.com/apk/res/android" 
-	id="cordova-plugin-simple-file-chooser" 
-	version="3.0.0"
+	id="@codeeshop/cordova-plugin-simple-file-chooser" 
+	version="4.0.0"
 >	
 	<name>Chooser</name>
 	<author>Cyph, Inc.</author>
